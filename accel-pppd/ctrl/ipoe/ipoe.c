@@ -1205,7 +1205,8 @@ static void ipoe_session_finished(struct ap_session *s)
 				ioctl(sock_fd, SIOCSIFNAME, &ifr);
 			}
 
-			ipaddr_del_peer(s->ifindex, ses->router, ses->yiaddr);
+			if (ses->router || ses->yiaddr)
+				ipaddr_del_peer(s->ifindex, ses->router, ses->yiaddr);
 
 			ipoe_nl_modify(ses->ifindex, 0, 0, 0, 0, NULL);
 
