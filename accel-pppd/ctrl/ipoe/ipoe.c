@@ -174,6 +174,7 @@ static const char *conf_agent_remote_id;
 static int conf_proto;
 static LIST_HEAD(conf_offer_delay);
 static const char *conf_vlan_name;
+static const char *conf_ifname;
 static int conf_ip_unnumbered;
 static int conf_check_mac_change;
 static int conf_soft_terminate;
@@ -565,6 +566,11 @@ static int ipoe_create_interface(struct ipoe_session *ses)
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_ifindex = ses->ifindex;
+
+	if (conf_ifname){
+		ses->ses.ifname_rename = _strdup(conf_ifname);
+	}
+
 	if (ioctl(sock_fd, SIOCGIFNAME, &ifr, sizeof(ifr))) {
 		log_ppp_error("ipoe: failed to get interface name\n");
 		ses->ifindex = -1;
@@ -572,6 +578,7 @@ static int ipoe_create_interface(struct ipoe_session *ses)
 		return -1;
 	}
 
+	strncpy(ses->ses.orig_ifname, ifr.ifr_name, AP_IFNAME_LEN);
 	strncpy(ses->ses.ifname, ifr.ifr_name, AP_IFNAME_LEN);
 	ses->ses.ifindex = ses->ifindex;
 	ses->ses.unit_idx = ses->ifindex;
@@ -1189,6 +1196,13 @@ static void ipoe_session_finished(struct ap_session *s)
 			if (ifr.ifr_flags & IFF_UP) {
 				ifr.ifr_flags &= ~IFF_UP;
 				ioctl(sock_fd, SIOCSIFFLAGS, &ifr);
+			}
+
+			// Recovery ipoeX interface name
+			if (strcmp(s->ifname, ses->ses.orig_ifname)) {
+				sprintf(ifr.ifr_newname, ses->ses.orig_ifname);
+				log_info2("ipoe: rename %s to %s\n", s->ifname, ses->ses.orig_ifname);
+				ioctl(sock_fd, SIOCSIFNAME, &ifr);
 			}
 
 			ipaddr_del_peer(s->ifindex, ses->router, ses->yiaddr);
@@ -4051,6 +4065,8 @@ static void load_config(void)
 		opt = conf_get_opt("common", "check-ip");
 	if (opt && opt >= 0)
 		conf_check_exists = atoi(opt) > 0;
+
+	conf_ifname = conf_get_opt("ipoe", "ifname");
 
 #ifdef RADIUS
 	if (triton_module_loaded("radius"))

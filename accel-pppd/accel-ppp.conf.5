@@ -467,6 +467,11 @@ If enabled accel-ppp will terminate session when detects change of mac address o
 .TP
 .BI "calling-sid=" mac|ip
 Specifies value of Calling-Station-Id attribute.
+.TP
+.BI "ifname=" ifname
+If this option is given ipoe interface will be renamed using
+.B ifname
+as a template, i.e l2ipoe%d => l2ipoe0.
 .SH [dns]
 .TP
 .BI "dns1=" x.x.x.x
