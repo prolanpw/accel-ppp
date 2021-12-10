@@ -557,10 +557,19 @@ static void format_bytes(char *buf, unsigned long long bytes)
 	sprintf(buf, "%.1f %s", d, suffix);
 }
 
+static void get_stats(struct ap_session *ses) {
+	if(ap_session_read_stats(ses, &stats) == -1) {
+		stats.rx_bytes = 0;
+		stats.tx_bytes = 0;
+		stats.rx_packets = 0;
+		stats.tx_packets = 0;
+	}
+}
+
 static void print_rx_bytes(struct ap_session *ses, char *buf)
 {
 	if (!stats_set) {
-		ap_session_read_stats(ses, &stats);
+		get_stats(ses);
 		stats_set = 1;
 	}
 	format_bytes(buf, 4294967296ll*ses->acct_input_gigawords + stats.rx_bytes);
@@ -569,7 +578,7 @@ static void print_rx_bytes(struct ap_session *ses, char *buf)
 static void print_tx_bytes(struct ap_session *ses, char *buf)
 {
 	if (!stats_set) {
-		ap_session_read_stats(ses, &stats);
+		get_stats(ses);
 		stats_set = 1;
 	}
 	format_bytes(buf, 4294967296ll*ses->acct_output_gigawords + stats.tx_bytes);
@@ -578,7 +587,7 @@ static void print_tx_bytes(struct ap_session *ses, char *buf)
 static void print_rx_bytes_raw(struct ap_session *ses, char *buf)
 {
 	if (!stats_set) {
-		ap_session_read_stats(ses, &stats);
+		get_stats(ses);
 		stats_set = 1;
 	}
 	sprintf(buf, "%llu", 4294967296ll*ses->acct_input_gigawords + stats.rx_bytes);
@@ -587,7 +596,7 @@ static void print_rx_bytes_raw(struct ap_session *ses, char *buf)
 static void print_tx_bytes_raw(struct ap_session *ses, char *buf)
 {
 	if (!stats_set) {
-		ap_session_read_stats(ses, &stats);
+		get_stats(ses);
 		stats_set = 1;
 	}
 	sprintf(buf, "%llu", 4294967296ll*ses->acct_output_gigawords + stats.tx_bytes);
@@ -596,7 +605,7 @@ static void print_tx_bytes_raw(struct ap_session *ses, char *buf)
 static void print_rx_pkts(struct ap_session *ses, char *buf)
 {
 	if (!stats_set) {
-		ap_session_read_stats(ses, &stats);
+		get_stats(ses);
 		stats_set = 1;
 	}
 	sprintf(buf, "%u", stats.rx_packets);
@@ -605,7 +614,7 @@ static void print_rx_pkts(struct ap_session *ses, char *buf)
 static void print_tx_pkts(struct ap_session *ses, char *buf)
 {
 	if (!stats_set) {
-		ap_session_read_stats(ses, &stats);
+		get_stats(ses);
 		stats_set = 1;
 	}
 	sprintf(buf, "%u", stats.tx_packets);
