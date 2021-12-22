@@ -110,6 +110,8 @@ static unsigned int stat_active;
 static unsigned int stat_starting;
 static unsigned int stat_finishing;
 
+static int conf_session_timeout;
+
 struct l2tp_serv_t
 {
 	struct triton_context_t ctx;
@@ -1812,6 +1814,9 @@ static int l2tp_session_start_data_channel(struct l2tp_sess_t *sess)
 	}
 	if (conf_ifname)
 		sess->ppp.ses.ifname_rename = _strdup(conf_ifname);
+
+	if (conf_session_timeout)
+		sess->ppp.ses.session_timeout = conf_session_timeout;
 
 	sess->ppp.ses.ctrl = &sess->ctrl;
 	sess->apses_state = APSTATE_INIT;
@@ -4971,6 +4976,12 @@ static void load_config(void)
 	conf_ipv6_pool = conf_get_opt("l2tp", "ipv6-pool");
 	conf_dpv6_pool = conf_get_opt("l2tp", "ipv6-pool-delegate");
 	conf_ifname = conf_get_opt("l2tp", "ifname");
+
+	opt = conf_get_opt("l2tp", "session-timeout");
+	if (opt)
+		conf_session_timeout = atoi(opt);
+	else
+		conf_session_timeout = 0;
 
 	switch (iprange_check_activation()) {
 	case IPRANGE_DISABLED:

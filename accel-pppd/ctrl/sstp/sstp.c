@@ -183,6 +183,8 @@ static mempool_t conn_pool;
 static unsigned int stat_starting;
 static unsigned int stat_active;
 
+static int conf_session_timeout;
+
 static inline void sstp_queue(struct sstp_conn_t *conn, struct buffer_t *buf);
 static int sstp_send(struct sstp_conn_t *conn, struct buffer_t *buf);
 static inline void sstp_queue_deferred(struct sstp_conn_t *conn, struct buffer_t *buf);
@@ -2402,6 +2404,9 @@ static int sstp_connect(struct triton_md_handler_t *h)
 		if (conf_ifname)
 			conn->ppp.ses.ifname_rename = _strdup(conf_ifname);
 
+		if (conf_session_timeout)
+			conn->ppp.ses.session_timeout = conf_session_timeout;
+
 		sockaddr_ntop(&addr, addr_buf, sizeof(addr_buf), FLAG_NOPORT);
 		conn->ctrl.calling_station_id = _strdup(addr_buf);
 
@@ -2842,6 +2847,12 @@ static void load_config(void)
 	opt = conf_get_opt("sstp", "rcvbuf");
 	if (opt && atoi(opt) > 0)
 		conf_rcvbuf = atoi(opt);
+
+	opt = conf_get_opt("sstp", "session-timeout");
+	if (opt)
+		conf_session_timeout = atoi(opt);
+	else
+		conf_session_timeout = 0;
 
 	ipmode = (serv.addr.u.sa.sa_family == AF_INET && !conf_proxyproto) ?
 			iprange_check_activation() : -1;

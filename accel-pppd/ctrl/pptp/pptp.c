@@ -71,6 +71,8 @@ static mempool_t conn_pool;
 static unsigned int stat_starting;
 static unsigned int stat_active;
 
+static int conf_session_timeout;
+
 static int pptp_read(struct triton_md_handler_t *h);
 static int pptp_write(struct triton_md_handler_t *h);
 static void pptp_timeout(struct triton_timer_t *);
@@ -722,6 +724,9 @@ static int pptp_connect(struct triton_md_handler_t *h)
 		if (conf_ifname)
 			conn->ppp.ses.ifname_rename = _strdup(conf_ifname);
 
+		if (conf_session_timeout)
+			conn->ppp.ses.session_timeout = conf_session_timeout;
+
 		triton_context_register(&conn->ctx, &conn->ppp.ses);
 		triton_md_register_handler(&conn->ctx, &conn->hnd);
 		triton_md_enable_handler(&conn->hnd,MD_MODE_READ);
@@ -806,6 +811,12 @@ static void load_config(void)
 	conf_ipv6_pool = conf_get_opt("pptp", "ipv6-pool");
 	conf_dpv6_pool = conf_get_opt("pptp", "ipv6-pool-delegate");
 	conf_ifname = conf_get_opt("pptp", "ifname");
+
+	opt = conf_get_opt("pptp", "session-timeout");
+	if (opt)
+		conf_session_timeout = atoi(opt);
+	else
+		conf_session_timeout = 0;
 
 	switch (iprange_check_activation()) {
 	case IPRANGE_DISABLED:
